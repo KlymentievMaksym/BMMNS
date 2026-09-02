@@ -1,6 +1,6 @@
-# {{REPO_NAME}}
+# BMMNS
 
-{{REPO_DESCRIPTION}}
+University labs for "Building mathematical models in natural science"
 
 <!-- Status Start -->
 
