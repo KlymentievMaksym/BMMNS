@@ -3,7 +3,7 @@
 University labs for "Building mathematical models in natural science"
 
 <!-- Status Start -->
-- [ ] lab1
+- [x] lab1 *(Completed: `submit/lab1`)*
 - [ ] lab10
 - [ ] lab2
 - [ ] lab3
