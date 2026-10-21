@@ -3,7 +3,7 @@ from collections.abc import Sequence
 import numpy as np
 from boundaries import BOUNDARY_FUNCTIONS
 from entities import WaveSimConfig
-from interfaces import WaveSource
+from interfaces import PlotWave, WaveSource
 
 
 def step_wave_equation(
@@ -34,6 +34,7 @@ def modify_U_next(
 def run_simulation(
     sources: WaveSource | Sequence[WaveSource],
     config: WaveSimConfig,
+    plotter: PlotWave = lambda U_next, k, K: None
 ) -> np.ndarray:
     shape = (config.Nx, config.Ny)
     U_past = np.zeros(shape)
@@ -47,8 +48,10 @@ def run_simulation(
 
     sources_list = sources if isinstance(sources, Sequence) else [sources]
 
-    if len(sources_list) != len(config.source_positions):
-        raise ValueError("Кількість джерел не відповідає кількості позицій u config.source_positions")
+    source_len = len(sources_list)
+    possitions_len = len(config.source_positions)
+    if source_len > possitions_len:
+        raise ValueError(f"Amount of sources bigger than config.source_positions, received {source_len} > {possitions_len}")
 
     for k in range(config.K):
         step_wave_equation(
@@ -69,6 +72,8 @@ def run_simulation(
 
         if k >= record_threshold:
             np.maximum(A_max, np.abs(U_next), out=A_max)
+
+        plotter(U_next=U_next, k=k, K=config.K)
 
         U_past, U_curr, U_next = U_curr, U_next, U_past
 

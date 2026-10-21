@@ -22,12 +22,14 @@ class WaveSimConfig:
     Ny: int = 201
     c: float = 1.0
     delta_t: float = 5e-4
-    K: int = 3000
+    K: int = 5000
     cmap: str = "viridis"
     amplitude: float = 1e-4
     omega: float = 10 * np.pi
     boundary_type: BoundaryType = BoundaryType.FREE
     source_positions: list[tuple[int, int]] = field(default_factory=list)
+    show_percentage: float = 0.01
+    pause_time: float = 0.001
 
     def __post_init__(self) -> None:
         self.hx = self.Lx / (self.Nx - 1)

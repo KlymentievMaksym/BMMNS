@@ -10,3 +10,7 @@ class WaveSource(Protocol):
 class BoundaryApply(Protocol):
     def __call__(self, U: np.ndarray) -> None:
         ...
+
+class PlotWave(Protocol):
+    def __call__(self, U_next: np.ndarray, k: int, K: int) -> None:
+        ...

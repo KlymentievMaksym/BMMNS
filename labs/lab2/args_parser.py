@@ -1,9 +1,10 @@
 import argparse
+import ast
+import dataclasses
 from dataclasses import fields
 
 import numpy as np
-
-from labs.lab2.entities import WaveSimConfig
+from entities import WaveSimConfig
 
 
 def parse_math_expr(val: str) -> float:
@@ -31,6 +32,12 @@ def parse_math_expr(val: str) -> float:
             f"Invalid float or math expression: '{val}'. Error: {e}"
         )
 
+def parse_source_positions(val: str) -> list[tuple[int, int]]:
+    if isinstance(val, str):
+        parsed = ast.literal_eval(val)
+        return [tuple(pos) for pos in parsed]
+    return val
+
 def parse_cli_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="2D Wave Equation Simulation",
@@ -39,10 +46,18 @@ def parse_cli_args() -> argparse.Namespace:
 
     for field in fields(WaveSimConfig):
         arg_type = parse_math_expr if field.type is float else field.type
+        arg_type = parse_source_positions if field.name == "source_positions" else arg_type
+
+        default_val = (
+            field.default_factory()
+            if field.default_factory is not dataclasses.MISSING
+            else field.default
+        )
+
         parser.add_argument(
             f"--{field.name}",
             type=arg_type,
-            default=field.default,
+            default=default_val,
             help=f"Parameter {field.name}",
         )
         
