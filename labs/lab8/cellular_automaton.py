@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from labs.lab8.boundary import BoundaryType
-from labs.lab8.neighborhood import NeighborhoodType, NEIGHBORHOOD_TO_FUNC
+from labs.lab8.boundary import BOUNDARY_TO_FUNC, BoundaryType
+from labs.lab8.neighborhood import NEIGHBORHOOD_TO_FUNC, NeighborhoodType
 
 
 class CellularAutomaton(ABC):
@@ -17,29 +17,22 @@ class CellularAutomaton(ABC):
     ) -> None:
         self.shape = shape
         self.dtype = dtype
-        self.boundary = boundary
         self.neighborhood = NeighborhoodType(neighborhood)
+        self.boundary = BoundaryType(boundary)
 
         if grid is not None:
             self.grid = np.array(grid, dtype=dtype)
         else:
             self.grid = np.zeros(shape=shape, dtype=dtype)
 
-        self.offsets = NEIGHBORHOOD_TO_FUNC[self.neighborhood](self.shape)
-
-    def get_neighbor_coords(self, coords: tuple[int, ...]) -> np.ndarray:
-        coords_arr = np.array(coords, dtype=np.int32)
-        neighbor_coords = coords_arr + self.offsets
-
-        if self.boundary == "periodic":
-            shape_arr = np.array(self.shape, dtype=np.int32)
-            neighbor_coords = neighbor_coords % shape_arr
-
-        return neighbor_coords
+        self.offsets = np.array(
+            NEIGHBORHOOD_TO_FUNC[self.neighborhood](self.shape), dtype=dtype
+        )
 
     def get_neighbor_values(self, coords: tuple[int, ...]) -> np.ndarray:
-        neighbor_coords = self.get_neighbor_coords(coords)
-        return self.grid[tuple(neighbor_coords.T)]
+        return BOUNDARY_TO_FUNC[self.boundary](
+            grid=self.grid, coords=coords, offsets=self.offsets, shape=self.shape
+        )
 
     @abstractmethod
     def step(self) -> None:

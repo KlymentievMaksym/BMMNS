@@ -1,8 +1,6 @@
 from enum import Enum
 from itertools import product
 
-import numpy as np
-
 from labs.lab8.interfaces import NeighborhoodOffsetsReceive
 
 

@@ -8,4 +8,10 @@ class NeighborhoodOffsetsReceive(Protocol):
 
 
 class BoundaryApply(Protocol):
-    def __call__(self, grid: np.ndarray) -> np.ndarray: ...
+    def __call__(
+        self,
+        grid: np.ndarray,
+        coords: tuple[int, ...],
+        offsets: np.ndarray,
+        shape: tuple[int, ...],
+    ) -> np.ndarray: ...

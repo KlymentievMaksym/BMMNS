@@ -4,23 +4,42 @@ import numpy as np
 
 from labs.lab8.interfaces import BoundaryApply
 
-class BoundaryFunc(BoundaryApply):
 
-def periodic_boundary(self, coords: tuple[int, ...]) -> np.ndarray:
-        coords_arr = np.array(coords, dtype=np.int32)
-        neighbor_coords = coords_arr + self.offsets
+def periodic_boundary(
+    grid: np.ndarray,
+    coords: tuple[int, ...],
+    offsets: np.ndarray,
+    shape: tuple[int, ...],
+) -> np.ndarray:
+    coords_arr = np.array(coords)
 
-        if self.boundary == "periodic":
-            shape_arr = np.array(self.shape, dtype=np.int32)
-            neighbor_coords = neighbor_coords % shape_arr
+    neighbor_coords = coords_arr + offsets
 
-        return neighbor_coords
+    return grid[tuple(neighbor_coords.T)]
+
+
+def fixed_boundary(
+    grid: np.ndarray,
+    coords: tuple[int, ...],
+    offsets: np.ndarray,
+    shape: tuple[int, ...],
+) -> np.ndarray:
+    coords_arr = np.array(coords)
+
+    neighbor_coords = coords_arr + offsets
+
+    shape_arr = np.array(shape)
+    neighbor_coords = neighbor_coords % shape_arr
+
+    return grid[tuple(neighbor_coords.T)]
+
 
 class BoundaryType(str, Enum):
     PERIODIC = "periodic"
     FIXED = "fixed"
 
+
 BOUNDARY_TO_FUNC: dict[BoundaryType, BoundaryApply] = {
     BoundaryType.PERIODIC: periodic_boundary,
-    BoundaryType.FIXED: periodic_boundary,
+    BoundaryType.FIXED: fixed_boundary,
 }
