@@ -9,4 +9,7 @@ University labs for "Building mathematical models in natural science"
 - [ ] lab3
 - [ ] lab4
 - [ ] lab5
+- [ ] lab7
+- [ ] lab8
+- [ ] lab9
 <!-- Status End -->
