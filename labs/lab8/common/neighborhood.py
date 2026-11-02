@@ -1,7 +1,7 @@
 from enum import Enum
 from itertools import product
 
-from labs.lab8.interfaces import NeighborhoodOffsetsReceive
+from .interfaces import NeighborhoodOffsetsReceive
 
 
 def moore_neighborhood(shape: tuple[int, ...]) -> list:

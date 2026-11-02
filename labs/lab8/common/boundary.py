@@ -2,7 +2,7 @@ from enum import Enum
 
 import numpy as np
 
-from labs.lab8.interfaces import BoundaryApply
+from .interfaces import BoundaryApply
 
 
 def periodic_boundary(
@@ -12,8 +12,9 @@ def periodic_boundary(
     shape: tuple[int, ...],
 ) -> np.ndarray:
     coords_arr = np.array(coords)
+    shape_arr = np.array(shape)
 
-    neighbor_coords = coords_arr + offsets
+    neighbor_coords = (coords_arr + offsets) % shape_arr
 
     return grid[tuple(neighbor_coords.T)]
 
@@ -25,11 +26,12 @@ def fixed_boundary(
     shape: tuple[int, ...],
 ) -> np.ndarray:
     coords_arr = np.array(coords)
+    shape_arr = np.array(shape)
 
     neighbor_coords = coords_arr + offsets
 
-    shape_arr = np.array(shape)
-    neighbor_coords = neighbor_coords % shape_arr
+    # Clip coordinates to remain within grid boundaries
+    neighbor_coords = np.clip(neighbor_coords, 0, shape_arr - 1)
 
     return grid[tuple(neighbor_coords.T)]
 

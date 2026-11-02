@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from labs.lab8.boundary import BOUNDARY_TO_FUNC, BoundaryType
-from labs.lab8.neighborhood import NEIGHBORHOOD_TO_FUNC, NeighborhoodType
+from .boundary import BOUNDARY_TO_FUNC, BoundaryType
+from .neighborhood import NEIGHBORHOOD_TO_FUNC, NeighborhoodType
 
 
 class CellularAutomaton(ABC):
@@ -26,7 +26,7 @@ class CellularAutomaton(ABC):
             self.grid = np.zeros(shape=shape, dtype=dtype)
 
         self.offsets = np.array(
-            NEIGHBORHOOD_TO_FUNC[self.neighborhood](self.shape), dtype=dtype
+            NEIGHBORHOOD_TO_FUNC[self.neighborhood](self.shape), dtype=np.int32
         )
 
     def get_neighbor_values(self, coords: tuple[int, ...]) -> np.ndarray:
