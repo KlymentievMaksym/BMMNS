@@ -31,7 +31,7 @@ def animate_sir_ca(
 
         display_grid = ca.grid.copy()
         display_grid[(display_grid >= 1) & (display_grid < ca.recovery_threshold)] = 1
-        display_grid[display_grid == ca.recovered_state] = 2
+        display_grid[display_grid == ca.RECOVERED_STATE] = 2
 
         ax_grid.clear()
         ax_grid.imshow(display_grid, cmap=cmap, vmin=0, vmax=2, interpolation="nearest")

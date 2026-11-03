@@ -1,27 +1,22 @@
 from collections.abc import Callable
+from dataclasses import asdict
+from enum import Enum
 
 import numpy as np
 
+SystemFn = Callable[..., np.ndarray]
 
-def euler_step(
-    system_fn: Callable[..., np.ndarray],
-    state: np.ndarray,
-    t: float,
-    dt: float,
-    **params,
-) -> np.ndarray:
-    """Perform a single integration step using Euler's method."""
+
+class Method(str, Enum):
+    EULER = "euler"
+    RK4 = "rk4"
+
+
+def euler_step(system_fn: SystemFn, state, t, dt, **params) -> np.ndarray:
     return state + dt * system_fn(t, state, **params)
 
 
-def rk4_step(
-    system_fn: Callable[..., np.ndarray],
-    state: np.ndarray,
-    t: float,
-    dt: float,
-    **params,
-) -> np.ndarray:
-    """Perform a single integration step using 4th order Runge-Kutta method."""
+def rk4_step(system_fn: SystemFn, state, t, dt, **params) -> np.ndarray:
     k1 = system_fn(t, state, **params)
     k2 = system_fn(t + 0.5 * dt, state + 0.5 * dt * k1, **params)
     k3 = system_fn(t + 0.5 * dt, state + 0.5 * dt * k2, **params)
@@ -29,23 +24,33 @@ def rk4_step(
     return state + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
 
 
+STEPPERS: dict[Method, Callable[..., np.ndarray]] = {
+    Method.EULER: euler_step,
+    Method.RK4: rk4_step,
+}
+
+
 def solve_ode(
-    system_fn: Callable[..., np.ndarray],
-    initial_state: np.ndarray,
+    system_fn: SystemFn,
+    initial_state: tuple[float, ...],
+    params,  # a dataclass whose fields match system_fn's keyword args
     t_max: float,
     dt: float,
-    method: str = "rk4",
-    **params,
+    method: Method = Method.RK4,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Integrate system of ODEs from t=0 to t_max."""
-    step_fn = rk4_step if method.lower() == "rk4" else euler_step
-    t_values = np.arange(0.0, t_max + dt, dt)
-    history = np.zeros((len(t_values), len(initial_state)), dtype=np.float64)
-    history[0] = initial_state
+    """Integrate an ODE system from t=0 to t_max."""
+    step_fn = STEPPERS[Method(method)]  # raises ValueError on unknown method
+    kwargs = asdict(params)
 
-    state = np.array(initial_state, dtype=np.float64)
-    for i in range(1, len(t_values)):
-        state = step_fn(system_fn, state, t_values[i - 1], dt, **params)
-        history[i] = state
+    n_steps = int(round(t_max / dt))
+    t_values = np.arange(n_steps + 1) * dt
+
+    state = np.asarray(initial_state, dtype=np.float64)
+    history = np.empty((n_steps + 1, state.size), dtype=np.float64)
+    history[0] = state
+
+    for i in range(n_steps):
+        state = step_fn(system_fn, state, t_values[i], dt, **kwargs)
+        history[i + 1] = state
 
     return t_values, history

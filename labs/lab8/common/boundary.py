@@ -19,21 +19,16 @@ def periodic_boundary(
     return grid[tuple(neighbor_coords.T)]
 
 
-def fixed_boundary(
-    grid: np.ndarray,
-    coords: tuple[int, ...],
-    offsets: np.ndarray,
-    shape: tuple[int, ...],
-) -> np.ndarray:
-    coords_arr = np.array(coords)
-    shape_arr = np.array(shape)
+def fixed_boundary(grid, coords, offsets, shape, fill_value=0) -> np.ndarray:
+    neighbor_coords = np.asarray(coords) + offsets
 
-    neighbor_coords = coords_arr + offsets
+    inside = np.all(
+        (neighbor_coords >= 0) & (neighbor_coords < np.asarray(shape)), axis=1
+    )
+    values = np.full(len(offsets), fill_value, dtype=grid.dtype)
+    values[inside] = grid[tuple(neighbor_coords[inside].T)]
 
-    # Clip coordinates to remain within grid boundaries
-    neighbor_coords = np.clip(neighbor_coords, 0, shape_arr - 1)
-
-    return grid[tuple(neighbor_coords.T)]
+    return values
 
 
 class BoundaryType(str, Enum):
