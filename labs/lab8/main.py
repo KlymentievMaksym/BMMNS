@@ -37,14 +37,14 @@ def run_ode_experiments(config: ODEConfig) -> None:
         plot_epidemic_dynamics(t, results, labels)
 
 
-def run_ca_experiment(config: CAConfig) -> None:
+def run_ca_experiment(config: CAConfig, rng=None) -> None:
     common = {
         "shape": config.shape,
         "boundary": config.boundary,
         "recovery_threshold": config.recovery_threshold,
         "initial_infected_ratio": config.initial_infected_ratio,
         "infection_threshold": config.infection_threshold,
-        "rng": GENERATOR,
+        "rng": rng,
     }
 
     models: tuple[SIRCellularAutomaton, SIVCellularAutomaton] = (
@@ -70,4 +70,4 @@ def run_ca_experiment(config: CAConfig) -> None:
 if __name__ == "__main__":
     config = parse_config()
     run_ode_experiments(config.ode)
-    run_ca_experiment(config.ca)
+    run_ca_experiment(config.ca, GENERATOR)
