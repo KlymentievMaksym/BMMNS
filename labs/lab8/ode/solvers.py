@@ -33,13 +33,13 @@ STEPPERS: dict[Method, Callable[..., np.ndarray]] = {
 def solve_ode(
     system_fn: SystemFn,
     initial_state: tuple[float, ...],
-    params,  # a dataclass whose fields match system_fn's keyword args
+    params,
     t_max: float,
     dt: float,
     method: Method = Method.RK4,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Integrate an ODE system from t=0 to t_max."""
-    step_fn = STEPPERS[Method(method)]  # raises ValueError on unknown method
+
+    step_fn = STEPPERS[method]
     kwargs = asdict(params)
 
     n_steps = int(round(t_max / dt))
