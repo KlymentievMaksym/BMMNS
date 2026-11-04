@@ -26,7 +26,7 @@ class SIRCellularAutomaton(SynchronousCA):
         self.recovery_threshold = recovery_threshold
         self.infection_threshold = infection_threshold
 
-        self.rng = rng or np.random.default_rng()
+        self.rng = rng if rng is not None else np.random.default_rng()
         grid = np.zeros(shape, dtype=np.int32)
         num_infected = max(1, int(grid.size * initial_infected_ratio))
         grid.flat[self.rng.choice(grid.size, size=num_infected, replace=False)] = 1
