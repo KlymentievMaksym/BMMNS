@@ -44,7 +44,6 @@ class SIVCellularAutomaton(SIRCellularAutomaton):
         state = int(self.grid[coords])
 
         if state == self.VACCINATED_STATE:
-            # leaky vaccine: roll the cheap random check first, then look at neighbours
             if self.rng.random() < self.breakthrough_prob and self._exposed(coords):
                 return 1
             return state
@@ -56,7 +55,6 @@ class SIVCellularAutomaton(SIRCellularAutomaton):
                 return self.VACCINATED_STATE
             return self.SUSCEPTIBLE
 
-        # infected cells: reuse the SIR ageing/recovery logic
         return super().apply_rule(coords)
 
     def get_counts(self) -> tuple[int, int, int]:
