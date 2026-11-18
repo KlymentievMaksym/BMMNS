@@ -191,7 +191,7 @@ def solve_beam(config: BeamConfig, scenario: BeamScenario) -> BeamResult:
     c = np.full(n, -6.0 * inv_h4, dtype=np.float64)
     d = np.full(n, -4.0 * inv_h4, dtype=np.float64)
     e = np.full(n, inv_h4, dtype=np.float64)
-    f = scenario.load_fn(x[2:-2]) * (config.q / config.EI)  # TODO: ??? 27 ???
+    f = scenario.load_fn(x[2:-2]) * (config.q / config.EI)
 
     raw_supports = (
         list(config.supports)
