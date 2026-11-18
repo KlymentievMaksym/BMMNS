@@ -5,8 +5,8 @@ from typing import Literal
 import numpy as np
 from numpy.typing import NDArray
 
-from config import PlateConfig
-from solvers import BiharmonicStencil, solve_sor
+from labs.lab3.config import PlateConfig
+from labs.lab3.solvers import BiharmonicStencil, solve_sor
 
 Array1D = NDArray[np.float64]
 Array2D = NDArray[np.float64]

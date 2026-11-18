@@ -5,8 +5,8 @@ from typing import Literal
 import numpy as np
 from numpy.typing import NDArray
 
-from config import BeamConfig
-from solvers import solve_pentadiagonal
+from labs.lab3.config import BeamConfig
+from labs.lab3.solvers import solve_pentadiagonal
 
 BoundaryType = Literal["clamped", "guided", "free"]
 Array1D = NDArray[np.float64]
@@ -191,7 +191,7 @@ def solve_beam(config: BeamConfig, scenario: BeamScenario) -> BeamResult:
     c = np.full(n, -6.0 * inv_h4, dtype=np.float64)
     d = np.full(n, -4.0 * inv_h4, dtype=np.float64)
     e = np.full(n, inv_h4, dtype=np.float64)
-    f = scenario.load_fn(x[2:-2]) * (config.q / config.EI)
+    f = scenario.load_fn(x[2:-2]) * (config.q / config.EI)  # TODO: ??? 27 ???
 
     raw_supports = (
         list(config.supports)

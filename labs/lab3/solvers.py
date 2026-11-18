@@ -135,6 +135,58 @@ def solve_sor(
     a00, a01, a10, a11 = stencil.a00, stencil.a01, stencil.a10, stencil.a11
     inv_c = 1.0 / stencil.c
 
+    # Precompute 3x3 strided subgrid views so all 12 neighbors in the 13-point
+    # biharmonic stencil belong to other subgrids and never conflict within a block.
+    subgrids: list[
+        tuple[
+            slice,
+            slice,
+            slice,
+            slice,
+            slice,
+            slice,
+            slice,
+            slice,
+            slice,
+            slice,
+            NDArray[np.bool_] | None,
+        ]
+    ] = []
+    for di in range(3):
+        i_start, i_stop = 2 + di, nx - 2
+        if i_start >= i_stop:
+            continue
+        si = slice(i_start, i_stop, 3)
+        si_m2 = slice(i_start - 2, i_stop - 2, 3)
+        si_m1 = slice(i_start - 1, i_stop - 1, 3)
+        si_p1 = slice(i_start + 1, i_stop + 1, 3)
+        si_p2 = slice(i_start + 2, i_stop + 2, 3)
+
+        for dj in range(3):
+            j_start, j_stop = 2 + dj, ny - 2
+            if j_start >= j_stop:
+                continue
+            sj = slice(j_start, j_stop, 3)
+            free_mask = ~fixed_mask[si, sj] if fixed_mask is not None else None
+            if free_mask is not None and not np.any(free_mask):
+                continue
+
+            subgrids.append(
+                (
+                    si,
+                    sj,
+                    si_m2,
+                    si_m1,
+                    si_p1,
+                    si_p2,
+                    slice(j_start - 2, j_stop - 2, 3),
+                    slice(j_start - 1, j_stop - 1, 3),
+                    slice(j_start + 1, j_stop + 1, 3),
+                    slice(j_start + 2, j_stop + 2, 3),
+                    free_mask,
+                )
+            )
+
     residual = float("inf")
     iterations = 0
 
@@ -142,32 +194,71 @@ def solve_sor(
         iterations = iteration
         max_diff = 0.0
 
-        for i in range(2, nx - 2):
-            for j in range(2, ny - 2):
-                if fixed_mask is not None and fixed_mask[i, j]:
-                    continue
+        for (
+            si,
+            sj,
+            si_m2,
+            si_m1,
+            si_p1,
+            si_p2,
+            sj_m2,
+            sj_m1,
+            sj_p1,
+            sj_p2,
+            free_mask,
+        ) in subgrids:
+            neighbors = (
+                ax * u[si_m2, sj]
+                + bx * u[si_m1, sj]
+                + dx * u[si_p1, sj]
+                + ex * u[si_p2, sj]
+                + ay * u[si, sj_m2]
+                + by * u[si, sj_m1]
+                + dy * u[si, sj_p1]
+                + ey * u[si, sj_p2]
+                + a00 * u[si_m1, sj_m1]
+                + a01 * u[si_m1, sj_p1]
+                + a10 * u[si_p1, sj_m1]
+                + a11 * u[si_p1, sj_p1]
+            )
+            u_old = u[si, sj]
+            u_gs = (rhs[si, sj] - neighbors) * inv_c
+            delta = omega * (u_gs - u_old)
+            if free_mask is not None:
+                delta = np.where(free_mask, delta, 0.0)
 
-                neighbors = (
-                    ax * u[i - 2, j]
-                    + bx * u[i - 1, j]
-                    + dx * u[i + 1, j]
-                    + ex * u[i + 2, j]
-                    + ay * u[i, j - 2]
-                    + by * u[i, j - 1]
-                    + dy * u[i, j + 1]
-                    + ey * u[i, j + 2]
-                    + a00 * u[i - 1, j - 1]
-                    + a01 * u[i - 1, j + 1]
-                    + a10 * u[i + 1, j - 1]
-                    + a11 * u[i + 1, j + 1]
-                )
-                u_gs = (rhs[i, j] - neighbors) * inv_c
-                u_new = u[i, j] + omega * (u_gs - u[i, j])
+            u[si, sj] = u_old + delta
+            block_diff = float(np.max(np.abs(delta)))
+            if block_diff > max_diff:
+                max_diff = block_diff
 
-                diff = abs(u_new - u[i, j])
-                if diff > max_diff:
-                    max_diff = diff
-                u[i, j] = u_new
+        # # Original scalar point-by-point SOR loop:
+        # for i in range(2, nx - 2):
+        #     for j in range(2, ny - 2):
+        #         if fixed_mask is not None and fixed_mask[i, j]:
+        #             continue
+        #
+        #         neighbors = (
+        #             ax * u[i - 2, j]
+        #             + bx * u[i - 1, j]
+        #             + dx * u[i + 1, j]
+        #             + ex * u[i + 2, j]
+        #             + ay * u[i, j - 2]
+        #             + by * u[i, j - 1]
+        #             + dy * u[i, j + 1]
+        #             + ey * u[i, j + 2]
+        #             + a00 * u[i - 1, j - 1]
+        #             + a01 * u[i - 1, j + 1]
+        #             + a10 * u[i + 1, j - 1]
+        #             + a11 * u[i + 1, j + 1]
+        #         )
+        #         u_gs = (rhs[i, j] - neighbors) * inv_c
+        #         u_new = u[i, j] + omega * (u_gs - u[i, j])
+        #
+        #         diff = abs(u_new - u[i, j])
+        #         if diff > max_diff:
+        #             max_diff = diff
+        #         u[i, j] = u_new
 
         residual = max_diff
         if residual <= epsilon:

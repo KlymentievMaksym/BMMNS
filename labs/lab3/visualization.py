@@ -31,6 +31,7 @@ def plot_beam_results(
     results: list[BeamResult],
     save_dir: Path | None = None,
     show: bool = True,
+    figsize: tuple[float, float] = (8, 2),
 ) -> Figure:
     """Plot numerical and analytical deflection curves for 1D beam scenarios."""
     if not results:
@@ -38,7 +39,9 @@ def plot_beam_results(
 
     ncols = 2
     nrows = math.ceil(len(results) / ncols)
-    fig, axes = plt.subplots(nrows, ncols, figsize=(13, 4.2 * nrows), squeeze=False)
+    fig, axes = plt.subplots(
+        nrows, ncols, figsize=(figsize[0], figsize[1] * nrows), squeeze=False
+    )
     flat_axes = axes.ravel()
 
     for idx, res in enumerate(results):
@@ -86,6 +89,7 @@ def plot_beam_errors(
     results: list[BeamResult],
     save_dir: Path | None = None,
     show: bool = True,
+    figsize: tuple[float, float] = (4, 4),
 ) -> Figure | None:
     """Plot pointwise absolute errors for 1D beam scenarios with exact solutions."""
     exact_results = [res for res in results if res.y_exact is not None]
@@ -95,7 +99,7 @@ def plot_beam_errors(
     fig, axes = plt.subplots(
         1,
         len(exact_results),
-        figsize=(5.2 * len(exact_results), 3.8),
+        figsize=(figsize[0] * len(exact_results), figsize[1]),
         squeeze=False,
     )
 
@@ -116,13 +120,14 @@ def plot_plate_results(
     results: list[PlateResult],
     save_dir: Path | None = None,
     show: bool = True,
+    figsize: tuple[float, float] = (4, 4),
 ) -> Figure:
     """Plot 3D deflection surfaces for 2D rectangular plate scenarios."""
     if not results:
         raise ValueError("Cannot plot empty plate results list.")
 
     n_plots = len(results)
-    fig = plt.figure(figsize=(5.8 * n_plots, 5.0))
+    fig = plt.figure(figsize=(figsize[0] * n_plots, figsize[1]))
 
     for idx, res in enumerate(results, start=1):
         ax = cast(Axes3D, fig.add_subplot(1, n_plots, idx, projection="3d"))
@@ -141,7 +146,7 @@ def plot_plate_results(
             ax.scatter(
                 px,
                 py,
-                pz,
+                pz,  # pyright: ignore[reportArgumentType]
                 color="crimson",
                 s=45,
                 depthshade=False,
@@ -165,13 +170,14 @@ def plot_polar_results(
     theta_steps: int = 72,
     save_dir: Path | None = None,
     show: bool = True,
+    figsize: tuple[float, float] = (7, 2.5),
 ) -> Figure:
     """Plot radial profiles and 3D annular surfaces for polar disk scenarios."""
     if not results:
         raise ValueError("Cannot plot empty polar results list.")
 
     nrows = len(results)
-    fig = plt.figure(figsize=(12.0, 4.3 * nrows))
+    fig = plt.figure(figsize=(figsize[0], figsize[1] * nrows))
     theta = np.linspace(0.0, 2.0 * np.pi, theta_steps, dtype=np.float64)
 
     for row, res in enumerate(results):

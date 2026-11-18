@@ -5,8 +5,8 @@ from typing import Literal
 import numpy as np
 from numpy.typing import NDArray
 
-from config import PolarConfig
-from solvers import solve_pentadiagonal
+from labs.lab3.config import PolarConfig
+from labs.lab3.solvers import solve_pentadiagonal
 
 PolarBoundaryType = Literal["clamped", "hinged", "guided"]
 Array1D = NDArray[np.float64]
