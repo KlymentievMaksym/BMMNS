@@ -11,5 +11,5 @@ University labs for "Building mathematical models in natural science"
 - [ ] lab5
 - [ ] lab7
 - [x] lab8 *(Completed: `submit/lab8`)*
-- [ ] lab9
+- [x] lab9 *(Completed: `submit/lab9`)*
 <!-- Status End -->
