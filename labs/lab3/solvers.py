@@ -232,7 +232,6 @@ def solve_sor(
             if block_diff > max_diff:
                 max_diff = block_diff
 
-        # # Original scalar point-by-point SOR loop:
         # for i in range(2, nx - 2):
         #     for j in range(2, ny - 2):
         #         if fixed_mask is not None and fixed_mask[i, j]:

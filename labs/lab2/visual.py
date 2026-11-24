@@ -65,7 +65,7 @@ class Plotter(PlotWave):
         assert self._X is not None
         assert self._Y is not None
 
-        self._ax2d.set_title(f"2D (Step {k+1}/{K})")
+        self._ax2d.set_title(f"2D (Step {k + 1}/{K})")
 
         elev, azim = self._ax3d.elev, self._ax3d.azim
         self._ax3d.clear()
@@ -87,7 +87,9 @@ class Plotter(PlotWave):
         plt.pause(self.pause_time)
 
 
-def plot_amplitude_map(A_max: np.ndarray, cmap: str, amplitude: float, omega: float | str) -> None:
+def plot_amplitude_map(
+    A_max: np.ndarray, cmap: str, amplitude: float, omega: float | str
+) -> None:
     plt.ioff()
     plt.figure()
     plt.imshow(A_max, cmap=cmap)

@@ -4,7 +4,7 @@ from labs.lab9.ca import SeededAsynchronousCA
 
 
 class SznajdCA(SeededAsynchronousCA):
-    """Sznajd opinion model: United we stand, divided we fall."""
+    """Sznajd model: if a pair agrees, all their neighbours adopt that opinion."""
 
     def __init__(
         self,
@@ -21,41 +21,38 @@ class SznajdCA(SeededAsynchronousCA):
             boundary=boundary,
             seed=seed,
         )
-        total_cells = int(np.prod(shape))
-        n_plus = int(round(total_cells * (0.5 + 0.5 * advantage)))
-        n_plus = min(max(n_plus, 1), total_cells - 1)
-
-        flat = np.full(total_cells, -1, dtype=np.int32)
+        total = int(np.prod(shape))
+        n_plus = min(max(int(round(total * (0.5 + 0.5 * advantage))), 1), total - 1)
+        flat = np.full(total, -1, dtype=np.int32)
         flat[:n_plus] = 1
         self.rng.shuffle(flat)
         self.grid = flat.reshape(shape)
+        self._plus = n_plus
 
     def apply_rule_at(self, coords: tuple[int, ...]) -> None:
         neighbors = self.get_valid_neighbor_coords(coords)
         if not neighbors:
             return
-        neighbor_coords = neighbors[int(self.rng.integers(0, len(neighbors)))]
+        partner = neighbors[int(self.rng.integers(0, len(neighbors)))]
+        value = int(self.grid[coords])
+        if value != int(self.grid[partner]):
+            return
 
-        val1 = int(self.grid[coords])
-        val2 = int(self.grid[neighbor_coords])
-
-        if val1 == val2:
-            targets = set(neighbors) | set(
-                self.get_valid_neighbor_coords(neighbor_coords)
-            )
-            targets.discard(coords)
-            targets.discard(neighbor_coords)
-            for target in targets:
-                self.grid[target] = val1
+        targets = set(neighbors) | set(self.get_valid_neighbor_coords(partner))
+        targets.discard(coords)
+        targets.discard(partner)
+        for target in targets:
+            if int(self.grid[target]) != value:
+                self._plus += value
+                self.grid[target] = value
 
     def is_consensus(self) -> bool:
-        first_val = self.grid.ravel()[0]
-        return bool(np.all(self.grid == first_val))
+        return self._plus in (0, self.grid.size)
 
     def run_until_consensus(self, max_steps: int = 2_000_000) -> tuple[int, int]:
         steps = 0
         while not self.is_consensus() and steps < max_steps:
             self.step()
             steps += 1
-        winner = int(self.grid.ravel()[0]) if self.is_consensus() else 0
+        winner = (1 if self._plus else -1) if self.is_consensus() else 0
         return winner, steps

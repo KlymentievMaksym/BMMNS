@@ -14,6 +14,7 @@ class SinusoidalSource(WaveSource):
     def __call__(self, t: float) -> float:
         return self.amplitude * np.sin(self.omega * t)
 
+
 @dataclass
 class WaveSimConfig:
     Lx: float = 1.0
@@ -34,14 +35,14 @@ class WaveSimConfig:
     def __post_init__(self) -> None:
         self.hx = self.Lx / (self.Nx - 1)
         self.hy = self.Ly / (self.Ny - 1)
-        
+
         stability_limit = min(self.hx, self.hy) / (self.c * np.sqrt(2))
         if self.delta_t > stability_limit:
             raise ValueError(
                 f"Stability condition violated: delta_t ({self.delta_t}) "
                 f"must be <= {stability_limit}"
             )
-        
+
         self.hx_coeff = (self.delta_t / self.hx) ** 2
         self.hy_coeff = (self.delta_t / self.hy) ** 2
         self.i_center = (self.Nx - 1) // 2
@@ -61,7 +62,7 @@ class WaveSimConfig:
                 )
 
     @classmethod
-    def from_args(cls, args: argparse.Namespace) -> 'WaveSimConfig':
+    def from_args(cls, args: argparse.Namespace) -> "WaveSimConfig":
         config_kwargs = {
             field.name: getattr(args, field.name)
             for field in fields(cls)

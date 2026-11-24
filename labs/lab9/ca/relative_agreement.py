@@ -1,53 +1,64 @@
 import numpy as np
 
-from labs.lab9.ca import SeededAsynchronousCA
 
+class RelativeAgreementCA:
+    """Bounded-confidence opinion model on N agents (well-mixed pairing).
 
-class RelativeAgreementCA(SeededAsynchronousCA):
-    """Relative Agreement Interaction Model with continuous opinion values."""
+    Two random agents interact only if |Oi - Oj| < e; then both move towards
+    each other by m * |Oi - Oj| / 2. Optionally one "zealot" never changes.
+    Pairing is global, so the grid is only a container (no spatial structure).
+    """
 
     def __init__(
         self,
-        shape: tuple[int, int] = (50, 50),
+        shape: tuple[int, ...] = (50, 50),
         e_threshold: float = 50.0,
         m_influence: float = 0.3,
         opinion_bounds: tuple[float, float] = (1.0, 256.0),
-        boundary: str = "periodic",
+        zealot: tuple[int, ...] | None = None,
+        zealot_opinion: float = 256.0,
         seed: int | None = None,
     ) -> None:
+        self.shape = shape
         self.e_threshold = e_threshold
         self.m_influence = m_influence
         self.opinion_bounds = opinion_bounds
-        super().__init__(
-            shape=shape,
-            dtype=np.dtype(np.float64),
-            grid=None,
-            neighborhood="moore",
-            boundary=boundary,
-            seed=seed,
-        )
+        self.rng = np.random.default_rng(seed)
+
         low, high = opinion_bounds
-        self.grid = self.rng.uniform(low, high, size=shape).astype(np.float64)
+        self.grid = self.rng.uniform(low, high, size=shape)
+        self.zealot_idx: int | None = None
+        if zealot is not None:
+            self.zealot_idx = int(np.ravel_multi_index(zealot, shape))
+            self.grid.flat[self.zealot_idx] = zealot_opinion
         self.initial_grid = self.grid.copy()
+        self._n = self.grid.size
 
-    def apply_rule_at(self, coords: tuple[int, ...]) -> None:
-        neighbors = self.get_valid_neighbor_coords(coords)
-        if not neighbors:
+    def step(self) -> None:
+        i = int(self.rng.integers(0, self._n))
+        j = int(self.rng.integers(0, self._n))
+        if i == j:
             return
-        neighbor_coords = neighbors[int(self.rng.integers(0, len(neighbors)))]
+        flat = self.grid.reshape(-1)
+        oi, oj = flat[i], flat[j]
+        if abs(oi - oj) >= self.e_threshold:
+            return
+        shift = 0.5 * self.m_influence * (oi - oj)
+        low, high = self.opinion_bounds
+        if i != self.zealot_idx:
+            flat[i] = min(max(oi - shift, low), high)
+        if j != self.zealot_idx:
+            flat[j] = min(max(oj + shift, low), high)
 
-        oi = float(self.grid[coords])
-        oj = float(self.grid[neighbor_coords])
+    def count_clusters(self, gap_tol: float = 1.0, min_size_frac: float = 0.01) -> int:
+        """Groups of sorted opinions split by gaps > gap_tol; tiny groups are ignored."""
+        values = np.sort(self.grid.ravel())
+        cuts = np.flatnonzero(np.diff(values) > gap_tol) + 1
+        sizes = np.diff(np.concatenate(([0], cuts, [values.size])))
+        return int(np.sum(sizes >= max(1, min_size_frac * values.size)))
 
-        if abs(oi - oj) < self.e_threshold:
-            shift = (self.m_influence / 2.0) * (oi - oj)
-            low, high = self.opinion_bounds
-            self.grid[coords] = np.clip(oi - shift, low, high)
-            self.grid[neighbor_coords] = np.clip(oj + shift, low, high)
-
-    def count_clusters(self, gap_tol: float = 2.0) -> int:
-        sorted_vals = np.sort(self.grid.ravel())
-        return int(1 + np.sum(np.diff(sorted_vals) > gap_tol))
+    def mean_opinion(self) -> float:
+        return float(np.mean(self.grid))
 
     def mean_opinion_shift(self) -> float:
         return float(np.mean(np.abs(self.grid - self.initial_grid)))

@@ -1,4 +1,3 @@
-
 from args_parser import parse_cli_args
 from entities import SinusoidalSource, WaveSimConfig
 from visual import Plotter, plot_amplitude_map
@@ -9,19 +8,12 @@ if __name__ == "__main__":
 
     config = WaveSimConfig.from_args(args)
     print(config.source_positions)
-    source = SinusoidalSource(
-        amplitude=config.amplitude,
-        omega=config.omega
-    )
+    source = SinusoidalSource(amplitude=config.amplitude, omega=config.omega)
     plotter = Plotter(
-        show_percentage=config.show_percentage,
-        pause_time=config.pause_time
+        show_percentage=config.show_percentage, pause_time=config.pause_time
     )
 
     A_max = run_simulation(source, config, plotter)
     plot_amplitude_map(
-        A_max=A_max,
-        cmap=config.cmap,
-        amplitude=config.amplitude,
-        omega=config.omega
+        A_max=A_max, cmap=config.cmap, amplitude=config.amplitude, omega=config.omega
     )

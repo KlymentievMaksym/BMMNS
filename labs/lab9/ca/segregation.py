@@ -40,12 +40,23 @@ class SchellingSegregationCA(CellularAutomaton):
 
     def _build_sorted_offsets(self) -> list[tuple[int, int]]:
         rows, cols = self.shape
-        candidates: list[tuple[int, int, int]] = []
-        for dr in range(-rows + 1, rows):
-            for dc in range(-cols + 1, cols):
-                if dr != 0 or dc != 0:
-                    candidates.append((dr * dr + dc * dc, dr, dc))
-        candidates.sort(key=lambda item: item[0])
+        if self.boundary == BoundaryType.PERIODIC:
+            # each wrapped displacement appears exactly once
+            dr_range = range(-(rows // 2), (rows + 1) // 2)
+            dc_range = range(-(cols // 2), (cols + 1) // 2)
+        else:
+            dr_range = range(-rows + 1, rows)
+            dc_range = range(-cols + 1, cols)
+        candidates = [
+            (dr * dr + dc * dc, dr, dc)
+            for dr in dr_range
+            for dc in dc_range
+            if dr != 0 or dc != 0
+        ]
+        # shuffle first so ties are not always broken towards the top-left
+        order = self.rng.permutation(len(candidates))
+        candidates = [candidates[i] for i in order]
+        candidates.sort(key=lambda item: item[0])  # stable sort keeps shuffled ties
         return [(dr, dc) for _, dr, dc in candidates]
 
     def _is_satisfied(

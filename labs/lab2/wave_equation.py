@@ -7,34 +7,37 @@ from interfaces import PlotWave, WaveSource
 
 
 def step_wave_equation(
-        hx_coeff: float,
-        hy_coeff: float,
-        U_past: np.ndarray,
-        U_curr: np.ndarray,
-        U_next: np.ndarray
-    ) -> np.ndarray:
+    hx_coeff: float,
+    hy_coeff: float,
+    U_past: np.ndarray,
+    U_curr: np.ndarray,
+    U_next: np.ndarray,
+) -> np.ndarray:
 
     U_next[1:-1, 1:-1] = (
-        2 * U_curr[1:-1, 1:-1] - U_past[1:-1, 1:-1]
+        2 * U_curr[1:-1, 1:-1]
+        - U_past[1:-1, 1:-1]
         + hx_coeff * (U_curr[2:, 1:-1] - 2 * U_curr[1:-1, 1:-1] + U_curr[0:-2, 1:-1])
         + hy_coeff * (U_curr[1:-1, 2:] - 2 * U_curr[1:-1, 1:-1] + U_curr[1:-1, 0:-2])
     )
 
     return U_next
 
+
 def modify_U_next(
-        U_next: np.ndarray,
-        i: int | list[int],
-        j: int | list[int],
-        value: float | list[float]
-    ) -> None:
+    U_next: np.ndarray,
+    i: int | list[int],
+    j: int | list[int],
+    value: float | list[float],
+) -> None:
 
     U_next[i, j] = value
+
 
 def run_simulation(
     sources: WaveSource | Sequence[WaveSource],
     config: WaveSimConfig,
-    plotter: PlotWave = lambda U_next, k, K: None
+    plotter: PlotWave = lambda U_next, k, K: None,
 ) -> np.ndarray:
     shape = (config.Nx, config.Ny)
     U_past = np.zeros(shape)
@@ -51,22 +54,17 @@ def run_simulation(
     source_len = len(sources_list)
     possitions_len = len(config.source_positions)
     if source_len > possitions_len:
-        raise ValueError(f"Amount of sources bigger than config.source_positions, received {source_len} > {possitions_len}")
+        raise ValueError(
+            f"Amount of sources bigger than config.source_positions, received {source_len} > {possitions_len}"
+        )
 
     for k in range(config.K):
-        step_wave_equation(
-            config.hx_coeff, config.hy_coeff, U_past, U_curr, U_next
-        )
+        step_wave_equation(config.hx_coeff, config.hy_coeff, U_past, U_curr, U_next)
 
         t = (k + 1) * config.delta_t
         values = [src(t) for src in sources_list]
 
-        modify_U_next(
-            U_next=U_next,
-            i=i_coords,
-            j=j_coords,
-            value=values
-        )
+        modify_U_next(U_next=U_next, i=i_coords, j=j_coords, value=values)
 
         BOUNDARY_FUNCTIONS[config.boundary_type](U_next)
 

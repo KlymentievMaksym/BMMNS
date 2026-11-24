@@ -32,11 +32,13 @@ def parse_math_expr(val: str) -> float:
             f"Invalid float or math expression: '{val}'. Error: {e}"
         )
 
+
 def parse_source_positions(val: str) -> list[tuple[int, int]]:
     if isinstance(val, str):
         parsed = ast.literal_eval(val)
         return [tuple(pos) for pos in parsed]
     return val
+
 
 def parse_cli_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -46,7 +48,9 @@ def parse_cli_args() -> argparse.Namespace:
 
     for field in fields(WaveSimConfig):
         arg_type = parse_math_expr if field.type is float else field.type
-        arg_type = parse_source_positions if field.name == "source_positions" else arg_type
+        arg_type = (
+            parse_source_positions if field.name == "source_positions" else arg_type
+        )
 
         default_val = (
             field.default_factory()
@@ -60,5 +64,5 @@ def parse_cli_args() -> argparse.Namespace:
             default=default_val,
             help=f"Parameter {field.name}",
         )
-        
+
     return parser.parse_args()
